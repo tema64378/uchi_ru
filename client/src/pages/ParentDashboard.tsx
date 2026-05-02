@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Camera, ChevronRight, Gift, Heart, Sparkles, Trophy, UsersRound } from 'lucide-react';
+import { Camera, ChevronRight, Gift, Heart, LogOut, Sparkles, Trophy, UsersRound } from 'lucide-react';
 
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { getUploads } from '../lib/api';
@@ -11,6 +11,7 @@ import type { CompletedQuest, GameState } from '../types';
 interface Props {
   state: GameState;
   onBack: () => void;
+  onReset: () => void;
 }
 
 interface UploadEntry {
@@ -45,7 +46,7 @@ function estimateMinutes(quests: CompletedQuest[]): number {
   return quests.length * 5;
 }
 
-export function ParentDashboard({ state, onBack }: Props) {
+export function ParentDashboard({ state, onBack, onReset }: Props) {
   const [uploads, setUploads] = useState<UploadEntry[]>([]);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
@@ -89,13 +90,23 @@ export function ParentDashboard({ state, onBack }: Props) {
       <div className="page-shell relative z-10 py-4">
         <div className="mb-4 rounded-[32px] glass-panel p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <button
-              onClick={onBack}
-              className="soft-chip bg-white/90 text-text-muted"
-              aria-label="Закрыть панель родителей"
-            >
-              ← Назад
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={onReset}
+                className="soft-chip bg-white/90 text-text-muted"
+                aria-label="Сбросить вход"
+              >
+                <LogOut size={13} />
+                Сбросить вход
+              </button>
+              <button
+                onClick={onBack}
+                className="soft-chip bg-white/90 text-text-muted"
+                aria-label="Закрыть панель родителей"
+              >
+                ← Назад
+              </button>
+            </div>
             <div className="text-right">
               <p className="text-caption font-black uppercase tracking-[0.08em] text-text-muted">
                 Панель родителей

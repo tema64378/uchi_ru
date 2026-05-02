@@ -2,7 +2,14 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 
-import { loadGameState, saveGameState, completeQuest, decayNeeds, createDemoGameState } from './lib/gameState';
+import {
+  loadGameState,
+  saveGameState,
+  completeQuest,
+  decayNeeds,
+  createDemoGameState,
+  clearGameState,
+} from './lib/gameState';
 import { getCompanionByNeed } from './lib/companions';
 import { ALL_QUESTS } from './lib/quests';
 import { saveSession } from './lib/api';
@@ -51,6 +58,13 @@ function AppRoutes() {
     saveGameState(next);
     setGameState(next);
     navigate('/');
+  }
+
+  function handleResetState() {
+    clearGameState();
+    setShowParent(false);
+    setGameState(loadGameState());
+    navigate('/', { replace: true });
   }
 
   const handleQuestComplete: QuestCompleteFn = (questId, xpEarned, _needType, photoUrl) => {
@@ -114,9 +128,14 @@ function AppRoutes() {
           path="/"
           element={
             isOnboarded
-              ? <HomePage state={gameState} onParentView={handleParentView} />
+              ? <HomePage state={gameState} onParentView={handleParentView} onReset={handleResetState} />
               : <OnboardingPage onComplete={handleOnboardingComplete} onDemoStart={handleDemoStart} />
           }
+        />
+
+        <Route
+          path="/reset"
+          element={<ResetEntry onReset={handleResetState} />}
         />
 
         <Route
@@ -172,11 +191,29 @@ function AppRoutes() {
             <ParentDashboard
               state={gameState}
               onBack={() => setShowParent(false)}
+              onReset={handleResetState}
             />
           </motion.div>
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+function ResetEntry({ onReset }: { onReset: () => void }) {
+  useEffect(() => {
+    onReset();
+  }, [onReset]);
+
+  return (
+    <div className="min-h-screen bg-[#eef9ff] flex items-center justify-center p-6">
+      <div className="glass-panel max-w-sm text-center">
+        <p className="text-h4 font-black text-text">Сбрасываем вход</p>
+        <p className="mt-2 text-body-md text-text-muted">
+          Сейчас откроется чистый экран для нового входа.
+        </p>
+      </div>
+    </div>
   );
 }
 

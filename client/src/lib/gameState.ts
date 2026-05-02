@@ -225,6 +225,15 @@ export function saveGameState(state: GameState): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+export function clearGameState(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LAST_VISIT_KEY);
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export function addXP(state: GameState, amount: number): GameState {
   let { pet } = state;
   let newXP = pet.xp + amount;

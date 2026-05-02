@@ -13,6 +13,7 @@ import {
   MapPin,
   MessageCircle,
   NotebookPen,
+  LogOut,
   Sparkles,
   Star,
   Trophy,
@@ -31,6 +32,7 @@ import type { GameState, NeedType, Quest } from '../types';
 interface Props {
   state: GameState;
   onParentView: () => void;
+  onReset: () => void;
 }
 
 type StationId = NeedType | 'daily';
@@ -193,7 +195,7 @@ function getPetPlacement(station: StationBase) {
   };
 }
 
-export function HomePage({ state, onParentView }: Props) {
+export function HomePage({ state, onParentView, onReset }: Props) {
   const navigate = useNavigate();
   const mood = getPetMoodFromNeeds(state.needs);
   const completedToday = state.completedQuestsToday.length;
@@ -705,14 +707,24 @@ export function HomePage({ state, onParentView }: Props) {
                       Нажми на станцию, чтобы выбрать занятие.
                     </p>
                   </div>
-                <button
-                  type="button"
-                  onClick={onParentView}
-                  className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-2 text-caption font-black text-primary shadow-[0_8px_18px_rgba(47,47,69,0.08)]"
-                >
-                  <UsersRound size={14} strokeWidth={2.6} />
-                  Родителям
-                </button>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={onReset}
+                    className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-2 text-caption font-black text-text-muted shadow-[0_8px_18px_rgba(47,47,69,0.08)]"
+                  >
+                    <LogOut size={14} strokeWidth={2.6} />
+                    Сбросить вход
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onParentView}
+                    className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-2 text-caption font-black text-primary shadow-[0_8px_18px_rgba(47,47,69,0.08)]"
+                  >
+                    <UsersRound size={14} strokeWidth={2.6} />
+                    Родителям
+                  </button>
+                </div>
                 </div>
               </div>
 
