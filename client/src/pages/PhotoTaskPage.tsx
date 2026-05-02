@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { validatePhoto } from '../lib/api';
 import { ALL_QUESTS } from '../lib/quests';
+import { playSuccessSound, playTapSound } from '../lib/sfx';
 import type { Quest } from '../types';
 
 interface Props {
@@ -60,12 +61,14 @@ export function PhotoTaskPage({ onComplete }: Props) {
 
   async function handleValidate() {
     if (!file || !quest) return;
+    playTapSound();
     setStatus('validating');
     setErrorMsg(null);
 
     try {
       const result = await validatePhoto(file, quest.photoPrompt ?? quest.title);
       if (result.ok) {
+        playSuccessSound();
         setStatus('success');
         setTimeout(() => {
           onComplete(quest.id, quest.xpReward, quest.needType, previewUrl ?? undefined);
@@ -76,6 +79,7 @@ export function PhotoTaskPage({ onComplete }: Props) {
       }
     } catch {
       setTimeout(() => {
+        playSuccessSound();
         setStatus('success');
         setTimeout(() => {
           onComplete(quest.id, quest.xpReward, quest.needType, previewUrl ?? undefined);

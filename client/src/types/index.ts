@@ -48,6 +48,16 @@ export interface CompletedQuest {
   title: string;
 }
 
+export interface GiftRecord {
+  companionId: string;
+  companionName: string;
+  gift: string;
+  questId: string;
+  questTitle: string;
+  needType: NeedType;
+  collectedAt: string;
+}
+
 export interface Pet {
   name: string;
   level: number;
@@ -85,4 +95,5 @@ export interface GameState {
   lifetimeXpEarned: number;
   questTypeCounts: QuestTypeCounts;
   badges: BadgeId[];
+  giftCollection: GiftRecord[];
 }

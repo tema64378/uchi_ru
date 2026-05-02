@@ -20,9 +20,11 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { Dragon } from '../components/Dragon';
 import { getPetMoodFromNeeds } from '../lib/gameState';
 import { COMPANION_CATALOG, getCompanionById, getCompanionByNeed } from '../lib/companions';
 import { ALL_QUESTS, getDailyQuest, getQuestsByNeedForAge } from '../lib/quests';
+import { playTapSound } from '../lib/sfx';
 import { getAgeLabel, getTodayKey } from '../lib/progression';
 import type { GameState, NeedType, Quest } from '../types';
 
@@ -173,11 +175,31 @@ function getNeedLabel(type: NeedType) {
   return NEED_META[type].label;
 }
 
+function getPetPlacement(station: StationBase) {
+  const top = Number.parseFloat(station.top);
+  const left = Number.parseFloat(station.left);
+
+  const offsets: Record<StationId, { top: number; left: number }> = {
+    learning: { top: 12, left: -11 },
+    creative: { top: 12, left: 12 },
+    daily: { top: 10, left: -10 },
+    energy: { top: -6, left: -10 },
+  };
+
+  const offset = offsets[station.id];
+  return {
+    top: `${Math.max(10, Math.min(90, top + offset.top))}%`,
+    left: `${Math.max(10, Math.min(90, left + offset.left))}%`,
+  };
+}
+
 export function HomePage({ state, onParentView }: Props) {
   const navigate = useNavigate();
   const mood = getPetMoodFromNeeds(state.needs);
   const completedToday = state.completedQuestsToday.length;
   const totalTodayXp = state.completedQuestsToday.reduce((sum, quest) => sum + quest.xpEarned, 0);
+  const journalEntries = [...state.completedQuestsToday].slice(-3).reverse();
+  const recentGifts = state.giftCollection.slice(0, 4);
 
   const learningQuests = useMemo(() => getQuestsByNeedForAge('learning', state.ageGroup), [state.ageGroup]);
   const creativeQuests = useMemo(() => getQuestsByNeedForAge('creative', state.ageGroup), [state.ageGroup]);
@@ -247,6 +269,7 @@ export function HomePage({ state, onParentView }: Props) {
   function selectStation(stationId: StationId) {
     const station = stations.find(item => item.id === stationId);
     if (!station) return;
+    playTapSound();
     setSelectedStationId(stationId);
     setSelectedQuestId(station.featuredQuest.id);
     setSelectedCompanionId(stationId);
@@ -254,6 +277,7 @@ export function HomePage({ state, onParentView }: Props) {
   }
 
   function selectQuest(quest: Quest) {
+    playTapSound();
     const stationId = questToStation.get(quest.id);
     if (stationId) {
       setSelectedStationId(stationId);
@@ -266,6 +290,7 @@ export function HomePage({ state, onParentView }: Props) {
   function selectCompanion(companionId: string) {
     const companion = COMPANION_CATALOG.find(item => item.id === companionId);
     if (!companion) return;
+    playTapSound();
     setSelectedCompanionId(companionId);
     setCompanionFactStep(0);
     if (companion.stationId) {
@@ -276,6 +301,7 @@ export function HomePage({ state, onParentView }: Props) {
   }
 
   function startQuest() {
+    playTapSound();
     navigate(`/task/${selectedQuest.type}/${selectedQuest.id}`);
   }
 
@@ -468,6 +494,86 @@ export function HomePage({ state, onParentView }: Props) {
               </div>
             </section>
 
+            <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="glass-panel rounded-[30px] p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-h4 font-black text-text">Журнал дня</h2>
+                    <p className="text-body-sm font-semibold text-text-muted">
+                      Короткая лента того, что уже сделано.
+                    </p>
+                  </div>
+                  <span className="soft-chip bg-white/90 text-text-muted">
+                    <CalendarDays size={13} />
+                    {completedToday} записи
+                  </span>
+                </div>
+
+                {journalEntries.length > 0 ? (
+                  <div className="mt-4 grid gap-3">
+                    {journalEntries.map(entry => (
+                      <div key={`${entry.questId}-${entry.completedAt}`} className="rounded-[22px] bg-white/95 p-4 shadow-[0_12px_24px_rgba(47,47,69,0.06)]">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="flex h-11 w-11 items-center justify-center rounded-[16px]"
+                            style={{ background: NEED_META[entry.needType].accent, color: NEED_META[entry.needType].color }}
+                          >
+                            {getQuestIcon(entry.taskType)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-body-sm font-black text-text">{entry.title}</p>
+                            <p className="text-caption font-semibold text-text-muted">
+                              {new Date(entry.completedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })} · +{entry.xpEarned} XP
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-[24px] border border-dashed border-white/80 bg-white/80 p-5 text-body-sm font-semibold text-text-muted">
+                    Пока пусто. После первого задания тут появится запись.
+                  </div>
+                )}
+              </div>
+
+              <div className="glass-panel rounded-[30px] p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-h4 font-black text-text">Коллекция подарков</h2>
+                    <p className="text-body-sm font-semibold text-text-muted">
+                      Подарки копятся после каждого выполненного задания.
+                    </p>
+                  </div>
+                  <span className="soft-chip bg-white/90 text-primary">
+                    <Gift size={13} />
+                    {recentGifts.length}
+                  </span>
+                </div>
+
+                {recentGifts.length > 0 ? (
+                  <div className="mt-4 grid gap-2">
+                    {recentGifts.map(gift => {
+                      const companion = getCompanionById(gift.companionId);
+                      return (
+                        <div key={`${gift.companionId}-${gift.questId}`} className="rounded-[22px] bg-white/95 p-4 shadow-[0_12px_24px_rgba(47,47,69,0.06)]">
+                          <p className="text-caption font-black uppercase tracking-[0.08em]" style={{ color: companion.color }}>
+                            {gift.companionName}
+                          </p>
+                          <p className="mt-1 text-body-sm font-black text-text">{gift.gift}</p>
+                          <p className="mt-1 text-caption font-semibold text-text-muted">{gift.questTitle}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-[24px] border border-dashed border-white/80 bg-white/80 p-5 text-body-sm font-semibold text-text-muted">
+                    Тут появятся подарки героев после выполнения заданий.
+                  </div>
+                )}
+              </div>
+            </section>
+
             <section className="glass-panel rounded-[30px] p-4 sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -628,6 +734,20 @@ export function HomePage({ state, onParentView }: Props) {
                     strokeWidth="5"
                   />
                 </svg>
+
+                <motion.div
+                  key={selectedStation.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 170, damping: 18 }}
+                  className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-1/2"
+                  style={getPetPlacement(selectedStation)}
+                >
+                  <div className="scale-90 origin-bottom">
+                    <Dragon mood={mood} level={state.pet.level} size="sm" />
+                  </div>
+                </motion.div>
 
                 {stations.map(station => {
                   const isActive = selectedStation.id === station.id;

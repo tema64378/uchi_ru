@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Camera, ChevronRight, Heart, Sparkles, Trophy, UsersRound } from 'lucide-react';
+import { Camera, ChevronRight, Gift, Heart, Sparkles, Trophy, UsersRound } from 'lucide-react';
 
 import { ProgressBar } from '../components/ui/ProgressBar';
 import { getUploads } from '../lib/api';
@@ -60,6 +60,7 @@ export function ParentDashboard({ state, onBack }: Props) {
   const totalXpToday = completedToday.reduce((sum, quest) => sum + quest.xpEarned, 0);
   const minutes = estimateMinutes(completedToday);
   const recentBadges = state.badges.slice(-4).reverse();
+  const recentGifts = state.giftCollection.slice(0, 3);
 
   const localPhotos = completedToday
     .filter(quest => quest.taskType === 'photo' && quest.photoUrl)
@@ -421,6 +422,40 @@ export function ParentDashboard({ state, onBack }: Props) {
                   showValue
                 />
               </div>
+            </motion.section>
+
+            <motion.section
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.09 }}
+              className="glass-panel rounded-[34px] p-5 sm:p-6"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-h4 font-black text-text">Подарки</h2>
+                  <p className="text-body-sm font-semibold text-text-muted">Что ребёнок уже получил от героев карты.</p>
+                </div>
+                <span className="soft-chip bg-white/90 text-primary">
+                  <Gift size={13} />
+                  {recentGifts.length}
+                </span>
+              </div>
+
+              {recentGifts.length > 0 ? (
+                <div className="mt-4 grid gap-2">
+                  {recentGifts.map(gift => (
+                    <div key={`${gift.companionId}-${gift.questId}`} className="rounded-[22px] bg-white/95 p-4 shadow-[0_12px_24px_rgba(47,47,69,0.06)]">
+                      <p className="text-caption font-black uppercase tracking-[0.08em] text-primary">{gift.companionName}</p>
+                      <p className="mt-1 text-body-sm font-black text-text">{gift.gift}</p>
+                      <p className="mt-1 text-caption font-semibold text-text-muted">{gift.questTitle}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-[24px] border border-dashed border-white/80 bg-white/80 p-5 text-body-sm font-semibold text-text-muted">
+                  Пока подарков нет. После первых заданий они появятся здесь.
+                </div>
+              )}
             </motion.section>
 
             <motion.section

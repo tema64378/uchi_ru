@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-route
 import { AnimatePresence, motion } from 'framer-motion';
 
 import { loadGameState, saveGameState, completeQuest, decayNeeds, createDemoGameState } from './lib/gameState';
+import { getCompanionByNeed } from './lib/companions';
 import { ALL_QUESTS } from './lib/quests';
 import { saveSession } from './lib/api';
 
@@ -85,6 +86,9 @@ function AppRoutes() {
         newBadges: result.newBadges,
         streak: newState.streak,
         totalQuests: newState.lifetimeQuestsCompleted,
+        newGift: result.newGift,
+        giftCount: newState.giftCollection.length,
+        giftSource: getCompanionByNeed(quest.needType),
       },
     });
   };

@@ -1,4 +1,5 @@
 import { ALL_QUESTS } from './quests';
+import { getCompanionByNeed } from './companions';
 import {
   createQuestTypeCounts,
   getDailyQuestForAge,
@@ -11,6 +12,7 @@ import type {
   BadgeId,
   CompletedQuest,
   GameState,
+  GiftRecord,
   NeedType,
   Quest,
   TaskType,
@@ -43,6 +45,7 @@ const DEFAULT_STATE: GameState = {
   lifetimeXpEarned: 0,
   questTypeCounts: createQuestTypeCounts(),
   badges: [],
+  giftCollection: [],
 };
 
 function toDayKey(date: Date): string {
@@ -77,6 +80,25 @@ function normalizeDailyQuests(quests: CompletedQuest[], today: string): Complete
   return everyQuestIsToday ? normalized : [];
 }
 
+function normalizeGiftCollection(gifts: GiftRecord[] | undefined): GiftRecord[] {
+  if (!Array.isArray(gifts)) return [];
+
+  const latestByCompanion = new Map<string, GiftRecord>();
+  gifts.forEach(gift => {
+    if (!gift?.companionId) return;
+    const existing = latestByCompanion.get(gift.companionId);
+    const currentTime = Number.isFinite(Date.parse(gift.collectedAt)) ? Date.parse(gift.collectedAt) : 0;
+    const existingTime = existing && Number.isFinite(Date.parse(existing.collectedAt)) ? Date.parse(existing.collectedAt) : 0;
+    if (!existing || currentTime >= existingTime) {
+      latestByCompanion.set(gift.companionId, gift);
+    }
+  });
+
+  return Array.from(latestByCompanion.values()).sort(
+    (a, b) => new Date(b.collectedAt).getTime() - new Date(a.collectedAt).getTime(),
+  );
+}
+
 function normalizeGameState(saved: Partial<GameState> = {}): GameState {
   const today = getTodayKey();
   const base: GameState = {
@@ -103,6 +125,7 @@ function normalizeGameState(saved: Partial<GameState> = {}): GameState {
     lifetimeXpEarned: typeof saved.lifetimeXpEarned === 'number' ? saved.lifetimeXpEarned : 0,
     questTypeCounts: mergeQuestTypeCounts(saved.questTypeCounts as Partial<GameState['questTypeCounts']> | undefined),
     badges: Array.isArray(saved.badges) ? [...new Set(saved.badges as BadgeId[])] : [],
+    giftCollection: normalizeGiftCollection(saved.giftCollection as GiftRecord[] | undefined),
     completedQuestsToday: [],
   };
 
@@ -165,6 +188,26 @@ export function createDemoGameState(): GameState {
       quiz: 1,
     },
     badges: ['first_quest', 'streak_3'],
+    giftCollection: [
+      {
+        companionId: 'learning',
+        companionName: 'Пират Блу',
+        gift: 'Синяя звезда',
+        questId: 'read_2',
+        questTitle: 'История о дружбе',
+        needType: 'learning',
+        collectedAt: new Date().toISOString(),
+      },
+      {
+        companionId: 'creative',
+        companionName: 'Пинки',
+        gift: 'Радужный набор',
+        questId: 'draw_1',
+        questTitle: 'Нарисуй дракона',
+        needType: 'creative',
+        collectedAt: new Date().toISOString(),
+      },
+    ],
     completedQuestsToday: [
       {
         questId: 'read-friendship',
@@ -222,6 +265,7 @@ interface QuestLike {
 export interface QuestCompletionResult {
   state: GameState;
   newBadges: BadgeId[];
+  newGift: GiftRecord | null;
 }
 
 export function completeQuest(
@@ -247,6 +291,22 @@ export function completeQuest(
     [quest.type]: normalized.questTypeCounts[quest.type] + 1,
   };
 
+  const giftCompanion = getCompanionByNeed(quest.needType);
+  const nextGift: GiftRecord = {
+    companionId: giftCompanion.id,
+    companionName: giftCompanion.name,
+    gift: giftCompanion.gift,
+    questId: quest.id,
+    questTitle: quest.title,
+    needType: quest.needType,
+    collectedAt: new Date().toISOString(),
+  };
+  const existingGiftIndex = normalized.giftCollection.findIndex(item => item.companionId === giftCompanion.id);
+  const giftCollection =
+    existingGiftIndex >= 0
+      ? normalized.giftCollection.map(item => item.companionId === giftCompanion.id ? nextGift : item)
+      : [nextGift, ...normalized.giftCollection];
+
   const nextCompletedQuests =
     normalized.dailyProgressDate === today
       ? [...normalized.completedQuestsToday, completed]
@@ -269,6 +329,7 @@ export function completeQuest(
     lifetimeQuestsCompleted: normalized.lifetimeQuestsCompleted + 1,
     lifetimeXpEarned: normalized.lifetimeXpEarned + quest.xpReward,
     questTypeCounts,
+    giftCollection,
   };
 
   const badges = getNewBadges(nextState);
@@ -279,7 +340,11 @@ export function completeQuest(
   };
 
   saveGameState(nextState);
-  return { state: nextState, newBadges };
+  return {
+    state: nextState,
+    newBadges,
+    newGift: existingGiftIndex >= 0 ? null : nextGift,
+  };
 }
 
 export function getPetMoodFromNeeds(needs: GameState['needs']): GameState['pet']['mood'] {

@@ -4,6 +4,7 @@ import { AlertCircle, Brain, ChevronLeft, RotateCcw, Sparkles, WandSparkles } fr
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { ALL_QUESTS } from '../lib/quests';
+import { playSuccessSound, playTapSound } from '../lib/sfx';
 
 interface Props {
   onComplete: (questId: string, xpReward: number, needType: string) => void;
@@ -43,9 +44,11 @@ export function QuizTaskPage({ onComplete }: Props) {
 
   function handlePick(index: number) {
     if (status === 'success') return;
+    playTapSound();
     setSelectedIndex(index);
 
     if (index === activeQuest.quizAnswerIndex) {
+      playSuccessSound();
       setStatus('success');
       setMessage('Правильно! Дракоша доволен.');
       timerRef.current = setTimeout(() => {

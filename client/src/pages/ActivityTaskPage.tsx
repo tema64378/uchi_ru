@@ -4,6 +4,7 @@ import { ChevronLeft, Play, Sparkles, Timer, Trophy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { ALL_QUESTS } from '../lib/quests';
+import { playSuccessSound, playTapSound } from '../lib/sfx';
 import type { NeedType } from '../types';
 
 interface Props {
@@ -67,11 +68,13 @@ export function ActivityTaskPage({ onComplete }: Props) {
   const activeQuest = quest;
 
   function finishActivity() {
+    playSuccessSound();
     setPhase('done');
     setTimeout(() => onComplete(activeQuest.id, activeQuest.xpReward, activeQuest.needType as NeedType), 700);
   }
 
   function startTimer() {
+    playTapSound();
     setPhase('running');
     setTimeLeft(duration);
     setMotiveIdx(0);

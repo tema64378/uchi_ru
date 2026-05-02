@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { validateSpeech } from '../lib/api';
 import { ALL_QUESTS } from '../lib/quests';
+import { playSuccessSound, playTapSound } from '../lib/sfx';
 import type { ValidationStatus } from '../types';
 
 interface Props {
@@ -100,6 +101,7 @@ export function ReadingTaskPage({ onComplete }: Props) {
   }
 
   function markSuccess(msg: string) {
+    playSuccessSound();
     setStatus('success');
     setResultMessage(msg);
     if (autoNavTimer.current) clearTimeout(autoNavTimer.current);
@@ -116,6 +118,7 @@ export function ReadingTaskPage({ onComplete }: Props) {
   }
 
   function handleDoneFallback() {
+    playTapSound();
     markSuccess('Молодец! Дракоша слушал!');
   }
 

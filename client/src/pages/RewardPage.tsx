@@ -6,7 +6,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { getCompanionByNeed } from '../lib/companions';
 import { BADGES } from '../lib/progression';
 import { ALL_QUESTS } from '../lib/quests';
-import type { BadgeId, Quest } from '../types';
+import { playGiftSound } from '../lib/sfx';
+import type { BadgeId, GiftRecord, Quest } from '../types';
 
 interface Props {
   onRewardCollected: () => void;
@@ -19,6 +20,15 @@ interface RewardLocationState {
   newBadges?: BadgeId[];
   streak?: number;
   totalQuests?: number;
+  newGift?: GiftRecord | null;
+  giftCount?: number;
+  giftSource?: {
+    id: string;
+    name: string;
+    gift: string;
+    asset: string;
+    color: string;
+  };
 }
 
 interface ConfettiPiece {
@@ -54,6 +64,10 @@ export function RewardPage({ onRewardCollected }: Props) {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (ready) playGiftSound();
+  }, [ready]);
+
   const confetti = useMemo<ConfettiPiece[]>(
     () =>
       Array.from({ length: 18 }, (_, index) => {
@@ -85,7 +99,9 @@ export function RewardPage({ onRewardCollected }: Props) {
   const streak = rewardState.streak ?? 0;
   const totalQuests = rewardState.totalQuests ?? 0;
   const levelUp = rewardState.levelUp ?? false;
-  const giftGiver = quest ? getCompanionByNeed(quest.needType) : null;
+  const giftGiver = rewardState.giftSource ?? (quest ? getCompanionByNeed(quest.needType) : null);
+  const newGift = rewardState.newGift ?? null;
+  const giftCount = rewardState.giftCount ?? 0;
 
   const badgeCards = newBadges.map(id => BADGES[id]).filter(Boolean);
 
@@ -227,6 +243,18 @@ export function RewardPage({ onRewardCollected }: Props) {
                       Подарок открывается только после завершения задания. Сейчас он уже у тебя.
                     </p>
                   </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="soft-chip bg-white/90 text-text-muted">
+                      <Gift size={13} />
+                      В коллекции {giftCount}
+                    </span>
+                    {newGift && (
+                      <span className="soft-chip bg-white/90 text-primary">
+                        <Sparkles size={13} />
+                        Новый подарок
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-4 overflow-hidden rounded-[26px] border border-white/70 bg-[#f8fbff]">
@@ -256,7 +284,7 @@ export function RewardPage({ onRewardCollected }: Props) {
 
                 <div className="mt-4 rounded-[24px] bg-[#f8f8ff] p-4">
                   <p className="text-body-sm font-semibold text-text-muted">
-                    Дракоша запомнил твоё задание и уже ждёт следующую точку на карте.
+                    Дракоша запомнил твоё задание, подарок уже в коллекции, и ждёт следующую точку на карте.
                   </p>
                 </div>
 

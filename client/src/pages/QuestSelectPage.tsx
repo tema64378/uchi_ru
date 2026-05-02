@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { getAgeLabel } from '../lib/progression';
 import { getQuestsByNeedForAge } from '../lib/quests';
+import { playTapSound } from '../lib/sfx';
 import type { GameState, Quest } from '../types';
 
 interface Props {
@@ -62,6 +63,7 @@ export function QuestSelectPage({ state }: Props) {
 
   function startQuest() {
     if (!selectedQuest) return;
+    playTapSound();
     navigate(`/task/${selectedQuest.type}/${selectedQuest.id}`);
   }
 
@@ -144,7 +146,10 @@ export function QuestSelectPage({ state }: Props) {
                   <button
                     key={quest.id}
                     type="button"
-                    onClick={() => setSelectedQuestId(quest.id)}
+                    onClick={() => {
+                      playTapSound();
+                      setSelectedQuestId(quest.id);
+                    }}
                     className={`rounded-[24px] border p-4 text-left transition ${
                       isActive ? 'border-primary/30 bg-white shadow-[0_18px_36px_rgba(47,47,69,0.14)]' : 'border-white/60 bg-white/96 hover:bg-white'
                     }`}
