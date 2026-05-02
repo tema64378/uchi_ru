@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronRight, Gift, Sparkles, Star, Trophy } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import { getCompanionByNeed } from '../lib/companions';
 import { BADGES } from '../lib/progression';
 import { ALL_QUESTS } from '../lib/quests';
 import type { BadgeId, Quest } from '../types';
@@ -84,6 +85,7 @@ export function RewardPage({ onRewardCollected }: Props) {
   const streak = rewardState.streak ?? 0;
   const totalQuests = rewardState.totalQuests ?? 0;
   const levelUp = rewardState.levelUp ?? false;
+  const giftGiver = quest ? getCompanionByNeed(quest.needType) : null;
 
   const badgeCards = newBadges.map(id => BADGES[id]).filter(Boolean);
 
@@ -207,7 +209,27 @@ export function RewardPage({ onRewardCollected }: Props) {
               </div>
 
               <div className="rounded-[32px] border border-white/70 bg-white/95 p-4 shadow-[0_18px_36px_rgba(47,47,69,0.08)]">
-                <div className="overflow-hidden rounded-[26px] border border-white/70 bg-[#f8fbff]">
+                <div className="rounded-[24px] bg-[#edeaff] p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[18px] bg-white">
+                      {giftGiver && <img src={giftGiver.asset} alt={giftGiver.name} className="h-full w-full object-contain" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-caption font-black uppercase tracking-[0.08em] text-text-muted">Подарок героя</p>
+                      <h3 className="truncate font-display text-h4 font-black text-text">{giftGiver?.name ?? 'Герой карты'}</h3>
+                    </div>
+                  </div>
+                  <div className="mt-3 rounded-[20px] bg-white/92 p-3">
+                    <p className="text-body-sm font-black text-primary">
+                      {giftGiver ? `${giftGiver.name} дарит тебе ${giftGiver.gift}` : 'Подарок уже ждёт тебя'}
+                    </p>
+                    <p className="mt-1 text-[12px] font-semibold leading-snug text-text-muted">
+                      Подарок открывается только после завершения задания. Сейчас он уже у тебя.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 overflow-hidden rounded-[26px] border border-white/70 bg-[#f8fbff]">
                   <img
                     src={
                       quest.needType === 'creative'
@@ -218,9 +240,8 @@ export function RewardPage({ onRewardCollected }: Props) {
                     }
                     alt=""
                     className="h-48 w-full object-cover"
-                  />
+                    />
                 </div>
-
                 <div className="mt-4 flex items-center gap-3">
                   <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-[#ffe8ea] text-brand">
                     <Star size={28} strokeWidth={2.5} />

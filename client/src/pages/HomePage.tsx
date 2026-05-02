@@ -21,6 +21,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import { getPetMoodFromNeeds } from '../lib/gameState';
+import { COMPANION_CATALOG, getCompanionById, getCompanionByNeed } from '../lib/companions';
 import { ALL_QUESTS, getDailyQuest, getQuestsByNeedForAge } from '../lib/quests';
 import { getAgeLabel, getTodayKey } from '../lib/progression';
 import type { GameState, NeedType, Quest } from '../types';
@@ -142,138 +143,6 @@ const STATION_BASE: Record<StationId, StationBase> = {
   },
 };
 
-interface Companion {
-  id: string;
-  stationId?: StationId;
-  name: string;
-  role: string;
-  gift: string;
-  asset: string;
-  color: string;
-  accent: string;
-  facts: string[];
-  tag: string;
-}
-
-const COMPANIONS: Companion[] = [
-  {
-    id: 'learning',
-    stationId: 'learning',
-    name: 'Пират Блу',
-    role: 'Хранитель вопросов',
-    gift: 'Синяя звезда',
-    asset: '/assets/chars/pirate_blue.png',
-    color: '#765fde',
-    accent: '#ece8ff',
-    tag: 'Станция знаний',
-    facts: [
-      'Пират Блу любит находить вопросы, на которые хочется искать ответ вместе.',
-      'Он хранит карту маленьких открытий и радуется каждому чтению вслух.',
-    ],
-  },
-  {
-    id: 'creative',
-    stationId: 'creative',
-    name: 'Пинки',
-    role: 'Капитан мастерской',
-    gift: 'Радужный набор',
-    asset: '/assets/chars/pirate_pink.png',
-    color: '#ff6170',
-    accent: '#ffe8ea',
-    tag: 'Станция творчества',
-    facts: [
-      'Пинки коллекционирует идеи, которые появляются из рисунков и фотографий.',
-      'Ей нравятся смелые цвета и смешные формы, которые потом можно дорисовать.',
-    ],
-  },
-  {
-    id: 'daily',
-    stationId: 'daily',
-    name: 'Светик',
-    role: 'Проводник дня',
-    gift: 'Золотой лист',
-    asset: '/assets/chars/dino2.png',
-    color: '#3aafff',
-    accent: '#e5f5ff',
-    tag: 'Задание дня',
-    facts: [
-      'Светик каждый день приносит новую тропинку и маленький сюрприз.',
-      'Он особенно радуется, когда маршрут не пропадает и превращается в привычку.',
-    ],
-  },
-  {
-    id: 'energy',
-    stationId: 'energy',
-    name: 'Пурпур',
-    role: 'Тренер поляны',
-    gift: 'Ритм-браслет',
-    asset: '/assets/chars/pirate_purple.png',
-    color: '#f0a000',
-    accent: '#fff3c8',
-    tag: 'Станция движения',
-    facts: [
-      'Пурпур любит короткие разминки, потому что после них легче думать и смеяться.',
-      'Он всегда знает, как превратить прыжки в весёлую игру.',
-    ],
-  },
-  {
-    id: 'buddy-1',
-    name: 'Луна',
-    role: 'Собирательница историй',
-    gift: 'Лунная наклейка',
-    asset: '/assets/chars/dino4.png',
-    color: '#4d75ff',
-    accent: '#e5f5ff',
-    tag: 'Гость карты',
-    facts: [
-      'Луна запоминает самые тёплые моменты дня и прячет их в маленькие звёзды.',
-      'Она любит спокойные задания, где можно читать и слушать.',
-    ],
-  },
-  {
-    id: 'buddy-2',
-    name: 'Кекс',
-    role: 'Почтовый помощник',
-    gift: 'Цветной карандаш',
-    asset: '/assets/chars/dino5.png',
-    color: '#ff8a00',
-    accent: '#fff0d9',
-    tag: 'Гость карты',
-    facts: [
-      'Кекс приносит идеи туда, где их не ждали, и любит маленькие открытия.',
-      'Он считает, что лучший подарок — это тёплая мысль и готовность пробовать новое.',
-    ],
-  },
-  {
-    id: 'buddy-3',
-    name: 'Зефир',
-    role: 'Тихий советчик',
-    gift: 'Мягкое облако',
-    asset: '/assets/chars/dino1.png',
-    color: '#29b37d',
-    accent: '#e7fff5',
-    tag: 'Гость карты',
-    facts: [
-      'Зефир умеет подбирать спокойный ритм, когда хочется немного замедлиться.',
-      'Он любит делать паузу и смотреть, как растёт внимательность.',
-    ],
-  },
-  {
-    id: 'buddy-4',
-    name: 'Ракета',
-    role: 'Скоростной друг',
-    gift: 'Звёздный браслет',
-    asset: '/assets/chars/dino3.png',
-    color: '#ff6170',
-    accent: '#ffe8ea',
-    tag: 'Гость карты',
-    facts: [
-      'Ракета превращает активность в быстрый и очень весёлый старт.',
-      'Он напоминает, что короткое движение может очень хорошо разбудить голову.',
-    ],
-  },
-];
-
 function clampNeedPercent(value: number, maxValue: number): number {
   return Math.max(0, Math.min(100, Math.round((value / maxValue) * 100)));
 }
@@ -361,15 +230,13 @@ export function HomePage({ state, onParentView }: Props) {
   const [factStep, setFactStep] = useState(0);
   const [selectedCompanionId, setSelectedCompanionId] = useState<string>(dailyQuest ? 'daily' : 'learning');
   const [companionFactStep, setCompanionFactStep] = useState(0);
-  const [giftedCompanionId, setGiftedCompanionId] = useState<string | null>(null);
 
   const selectedStation = stations.find(station => station.id === selectedStationId) ?? stations[0];
   const selectedQuest = quickQuests.find(quest => quest.id === selectedQuestId)
     ?? stations.flatMap(station => [station.featuredQuest, ...station.quests]).find(quest => quest.id === selectedQuestId)
     ?? featuredQuest;
-  const selectedCompanion = COMPANIONS.find(companion => companion.id === selectedCompanionId)
-    ?? COMPANIONS[0];
-  const selectedGiftClaimed = giftedCompanionId === selectedCompanion.id;
+  const selectedCompanion = getCompanionById(selectedCompanionId);
+  const rewardCompanion = getCompanionByNeed(selectedQuest.needType);
   const selectedSceneSrc =
     selectedStation.id === 'creative'
       ? '/assets/scenes/reading2.png'
@@ -397,7 +264,7 @@ export function HomePage({ state, onParentView }: Props) {
   }
 
   function selectCompanion(companionId: string) {
-    const companion = COMPANIONS.find(item => item.id === companionId);
+    const companion = COMPANION_CATALOG.find(item => item.id === companionId);
     if (!companion) return;
     setSelectedCompanionId(companionId);
     setCompanionFactStep(0);
@@ -609,16 +476,10 @@ export function HomePage({ state, onParentView }: Props) {
                     Герои карты сами дарят тебе подарок после задания.
                   </p>
                 </div>
-                {giftedCompanionId && (
-                  <span className="soft-chip bg-white/90 text-primary">
-                    <Gift size={13} />
-                    Подарок от {COMPANIONS.find(companion => companion.id === giftedCompanionId)?.name ?? 'героя'}
-                  </span>
-                )}
               </div>
 
               <div className="mt-4 grid auto-rows-fr items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {COMPANIONS.filter(companion => companion.id !== 'daily').map(companion => {
+                {COMPANION_CATALOG.filter(companion => companion.id !== 'daily').map(companion => {
                   const isSelected = selectedCompanion.id === companion.id;
                   return (
                     <button
@@ -687,9 +548,18 @@ export function HomePage({ state, onParentView }: Props) {
                       <p className="text-body-sm font-semibold leading-snug text-text-muted">
                         {selectedCompanion.facts[companionFactStep % selectedCompanion.facts.length]}
                       </p>
-                      <p className="mt-2 text-caption font-black text-text-muted">
-                        Подарок героя: {selectedCompanion.gift}
-                      </p>
+                      <div className="mt-3 rounded-[20px] bg-white/92 p-3">
+                        <div className="flex items-center gap-2 text-caption font-black uppercase tracking-[0.08em] text-text-muted">
+                          <Gift size={13} />
+                          Подарок после задания
+                        </div>
+                        <p className="mt-2 text-body-sm font-black text-text">
+                          {rewardCompanion.name} принесёт {rewardCompanion.gift}.
+                        </p>
+                        <p className="mt-1 text-[12px] font-semibold leading-snug text-text-muted">
+                          Выполни выбранное задание, и награда откроется на отдельном экране.
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -703,46 +573,11 @@ export function HomePage({ state, onParentView }: Props) {
                       <MessageCircle size={18} strokeWidth={2.6} />
                       Ещё факт
                     </button>
-
-                    <button
-                      type="button"
-                      disabled={completedToday === 0 || selectedGiftClaimed}
-                      onClick={() => setGiftedCompanionId(selectedCompanion.id)}
-                      className="inline-flex items-center gap-2 rounded-[20px] bg-white px-4 py-3 text-body-sm font-black text-primary shadow-[0_10px_24px_rgba(47,47,69,0.08)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <Gift size={18} strokeWidth={2.4} />
-                      {completedToday > 0 ? selectedGiftClaimed ? 'Подарок уже у тебя' : 'Забрать подарок' : 'Сначала задание'}
-                    </button>
+                    <div className="rounded-[20px] border border-dashed border-primary/20 bg-[#edeaff] px-4 py-3 text-body-sm font-black text-primary">
+                      Подарок откроется после выполнения задания.
+                    </div>
                   </div>
                 </div>
-
-                {selectedGiftClaimed && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    className="mt-4 rounded-[24px] border border-primary/15 bg-[#edeaff] p-4"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-white text-primary">
-                        <Gift size={22} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-body-sm font-black text-primary">
-                          {selectedCompanion.name} дарит тебе {selectedCompanion.gift}
-                        </p>
-                        <p className="mt-1 text-caption font-semibold text-text-muted">
-                          Спасибо за сегодняшние задания. Это маленькая награда от героя карты.
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {completedToday === 0 && (
-                  <div className="mt-4 rounded-[24px] border border-dashed border-white/80 bg-white/80 p-4 text-body-sm font-semibold text-text-muted">
-                    Выполни хотя бы одно задание, и герой сам подарит тебе подарок.
-                  </div>
-                )}
               </div>
             </section>
           </div>
@@ -764,14 +599,14 @@ export function HomePage({ state, onParentView }: Props) {
                       Нажми на станцию, чтобы выбрать занятие.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={onParentView}
-                    className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-2 text-caption font-black text-primary shadow-[0_8px_18px_rgba(47,47,69,0.08)]"
-                  >
-                    <UsersRound size={14} strokeWidth={2.6} />
-                    Родителям
-                  </button>
+                <button
+                  type="button"
+                  onClick={onParentView}
+                  className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-2 text-caption font-black text-primary shadow-[0_8px_18px_rgba(47,47,69,0.08)]"
+                >
+                  <UsersRound size={14} strokeWidth={2.6} />
+                  Родителям
+                </button>
                 </div>
               </div>
 
