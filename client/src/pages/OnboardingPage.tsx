@@ -5,6 +5,7 @@ import { getAgeLabel } from '../lib/progression';
 
 interface Props {
   onComplete: (name: string, ageGroup: AgeGroup) => void;
+  onDemoStart?: () => void;
 }
 
 const AGE_GROUPS: { value: AgeGroup; title: string; description: string; icon: string }[] = [
@@ -12,7 +13,7 @@ const AGE_GROUPS: { value: AgeGroup; title: string; description: string; icon: s
   { value: '9-11', title: '9–11 лет', description: 'Чуть больше логики, счёта и самостоятельности.', icon: '🚀' },
 ];
 
-export function OnboardingPage({ onComplete }: Props) {
+export function OnboardingPage({ onComplete, onDemoStart }: Props) {
   const [name, setName] = useState('');
   const [ageGroup, setAgeGroup] = useState<AgeGroup>('6-8');
   const [step, setStep] = useState(0);
@@ -42,6 +43,14 @@ export function OnboardingPage({ onComplete }: Props) {
             <button className="btn-primary w-full text-h4" onClick={() => setStep(1)}>
               Поехали
             </button>
+            {onDemoStart && (
+              <button
+                className="btn-secondary w-full mt-3"
+                onClick={onDemoStart}
+              >
+                Демо для видео
+              </button>
+            )}
           </motion.div>
         )}
 

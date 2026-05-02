@@ -134,6 +134,50 @@ export function loadGameState(): GameState {
   }
 }
 
+export function createDemoGameState(): GameState {
+  const today = getTodayKey();
+
+  return normalizeGameState({
+    pet: {
+      name: 'Дракоша',
+      level: 3,
+      xp: 65,
+      xpToNext: 144,
+      mood: 'excited',
+    },
+    needs: [
+      { type: 'learning', label: 'Знания', emoji: '📚', color: '#765fde', value: 76, maxValue: 100 },
+      { type: 'creative', label: 'Творчество', emoji: '🎨', color: '#ff6170', value: 68, maxValue: 100 },
+      { type: 'energy', label: 'Энергия', emoji: '⚡', color: '#fbcc3c', value: 82, maxValue: 100 },
+    ],
+    childName: 'Алиса',
+    ageGroup: '6-8',
+    dailyProgressDate: today,
+    lastActivityDate: today,
+    streak: 4,
+    lifetimeQuestsCompleted: 9,
+    lifetimeXpEarned: 285,
+    questTypeCounts: {
+      reading: 2,
+      story: 2,
+      photo: 2,
+      activity: 2,
+      quiz: 1,
+    },
+    badges: ['first_quest', 'streak_3'],
+    completedQuestsToday: [
+      {
+        questId: 'read-friendship',
+        completedAt: new Date().toISOString(),
+        xpEarned: 35,
+        taskType: 'reading',
+        needType: 'learning',
+        title: 'История о дружбе',
+      },
+    ],
+  });
+}
+
 export function saveGameState(state: GameState): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }

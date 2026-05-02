@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 
-import { loadGameState, saveGameState, completeQuest, decayNeeds } from './lib/gameState';
+import { loadGameState, saveGameState, completeQuest, decayNeeds, createDemoGameState } from './lib/gameState';
 import { ALL_QUESTS } from './lib/quests';
 import { saveSession } from './lib/api';
 
@@ -40,6 +40,13 @@ function AppRoutes() {
       childName: name,
       ageGroup,
     };
+    saveGameState(next);
+    setGameState(next);
+    navigate('/');
+  }
+
+  function handleDemoStart() {
+    const next = createDemoGameState();
     saveGameState(next);
     setGameState(next);
     navigate('/');
@@ -102,7 +109,7 @@ function AppRoutes() {
           element={
             isOnboarded
               ? <HomePage state={gameState} onParentView={handleParentView} />
-              : <OnboardingPage onComplete={handleOnboardingComplete} />
+              : <OnboardingPage onComplete={handleOnboardingComplete} onDemoStart={handleDemoStart} />
           }
         />
 
