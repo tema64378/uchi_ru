@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -104,6 +104,8 @@ function AppRoutes() {
   return (
     <>
       <Routes>
+        <Route path="/demo" element={<DemoEntry onStart={handleDemoStart} />} />
+
         <Route
           path="/"
           element={
@@ -171,6 +173,28 @@ function AppRoutes() {
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+function DemoEntry({ onStart }: { onStart: () => void }) {
+  useEffect(() => {
+    onStart();
+  }, [onStart]);
+
+  return (
+    <div className="min-h-screen bg-[#F5F4FF] flex items-center justify-center p-6">
+      <div className="glass-panel max-w-sm text-center">
+        <img
+          src="/assets/chars/dino3.png"
+          alt="Дракоша"
+          className="w-32 h-32 object-contain mx-auto mb-4 animate-float"
+        />
+        <h1 className="text-h3 font-black text-text mb-2">Готовим демо</h1>
+        <p className="text-body-md text-text-muted">
+          Сейчас откроется карта с прогрессом для записи видео.
+        </p>
+      </div>
+    </div>
   );
 }
 
