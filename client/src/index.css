@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-family: 'Nunito', system-ui, sans-serif;
+    background:
+      radial-gradient(circle at top left, rgba(255, 255, 255, 0.72), transparent 28%),
+      radial-gradient(circle at 80% 10%, rgba(255, 219, 156, 0.22), transparent 18%),
+      linear-gradient(180deg, #ecf8ca 0%, #d7eead 30%, #bedf95 68%, #a7cc7e 100%);
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.24), transparent 22%),
+      radial-gradient(circle at 72% 12%, rgba(255, 255, 255, 0.14), transparent 18%),
+      linear-gradient(180deg, #eff9d0 0%, #d9eeaf 28%, #bedf94 62%, #a4c97b 100%);
+    color: #2f2f45;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-display {
+    font-family: 'Fredoka', 'Nunito', sans-serif;
+    letter-spacing: 0;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full
+           bg-primary text-white font-black text-body-md border border-white/20
+           shadow-[0_12px_28px_rgba(118,95,222,0.28)] transition-all duration-150 select-none
+           hover:bg-primary-hover hover:-translate-y-0.5 active:bg-primary-hover
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full
+           bg-white/90 text-primary font-black text-body-md border border-white/60
+           backdrop-blur-md transition-all duration-150 select-none
+           hover:bg-[#E6E0FF] hover:-translate-y-0.5 active:bg-[#E6E0FF] disabled:opacity-40;
+  }
+  .btn-brand {
+    @apply inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full
+           bg-brand text-white font-black text-body-md border border-white/20
+           shadow-[0_12px_24px_rgba(255,97,112,0.24)]
+           transition-all duration-150 select-none
+           hover:bg-[#e8505e] hover:-translate-y-0.5 active:bg-[#e8505e];
+  }
+  .card {
+    @apply bg-white/80 backdrop-blur-md rounded-[28px] border border-white/60 shadow-[0_16px_40px_rgba(47,47,69,0.12)] p-5;
+  }
+  .need-bar {
+    @apply h-3 rounded-full overflow-hidden bg-white/50;
+  }
+  .need-bar-fill {
+    @apply h-full rounded-full transition-all duration-700 ease-out;
+  }
+  .app-page {
+    @apply min-h-screen relative overflow-x-hidden;
+  }
+  .page-shell {
+    @apply mx-auto w-full max-w-[1520px] px-4 sm:px-5;
+  }
+  .stat-card {
+    @apply bg-white/80 backdrop-blur-md rounded-[22px] border border-white/60 shadow-[0_10px_24px_rgba(47,47,69,0.08)] px-4 py-4;
+  }
+  .soft-chip {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-caption font-black;
+  }
+  .glass-panel {
+    @apply bg-white/75 backdrop-blur-md border border-white/60 shadow-[0_18px_40px_rgba(47,47,69,0.12)];
+  }
+  .map-shell {
+    @apply relative overflow-hidden rounded-[36px] border border-white/60 shadow-[0_24px_70px_rgba(47,47,69,0.14)] bg-white/80 backdrop-blur-md;
+  }
+  .map-title-chip {
+    @apply inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-caption font-black uppercase tracking-[0.08em];
+  }
+  .map-node {
+    @apply relative overflow-hidden rounded-[28px] border border-white/60 shadow-[0_18px_36px_rgba(47,47,69,0.16)] backdrop-blur-sm transition-colors duration-200;
+  }
+  .map-node__badge {
+    @apply inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-caption font-black;
+  }
+  .map-rail {
+    @apply absolute rounded-full;
+  }
+  .mission-card {
+    @apply card flex flex-col gap-4;
+  }
+  .mission-muted {
+    @apply text-body-sm text-text-muted leading-relaxed;
+  }
+}
+
+/* Speech pulse animation */
+@keyframes pulse_ring {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.speech-pulse::before,
+.speech-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(118,95,222,0.3);
+  animation: pulse_ring 1.4s ease-out infinite;
+}
+.speech-pulse::after { animation-delay: 0.7s; }
+
+/* Stars confetti */
+@keyframes confetti_fall {
+  0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(120vh) rotate(720deg); opacity: 0; }
+}
+.confetti-piece {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  animation: confetti_fall linear forwards;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Progress glow */
+@keyframes glow_pulse {
+  0%,100% { box-shadow: 0 0 8px currentColor; }
+  50%      { box-shadow: 0 0 20px currentColor; }
+}
+.glow-pulse { animation: glow_pulse 2s ease-in-out infinite; }
+
+/* Mic recording indicator */
+@keyframes rec_blink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+.rec-blink { animation: rec_blink 1s ease-in-out infinite; }
+
+@keyframes drift_cloud {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(24px); }
+}
+
+.cloud-drift {
+  animation: drift_cloud 14s ease-in-out infinite alternate;
+}
