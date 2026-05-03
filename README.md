@@ -56,7 +56,6 @@ cd client && npm run dev
 | Фронтенд | React 19, TypeScript, Vite, Tailwind CSS, Framer Motion |
 | Бэкенд | Node.js, Express, TypeScript |
 | База данных | SQLite (better-sqlite3) |
-| ИИ-валидация | Anthropic Claude API (claude-haiku-4-5) |
 | Распознавание речи | Web Speech API (встроен в браузер) |
 
 ## Структура проекта
