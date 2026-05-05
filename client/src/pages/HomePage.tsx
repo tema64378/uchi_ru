@@ -199,6 +199,52 @@ function getQuestNeedChip(quest: Quest) {
   return NEED_META[quest.needType];
 }
 
+function getRecommendedQuest(
+  dailyQuest: Quest | undefined,
+  stations: Station[],
+  completedQuestIds: Set<string>,
+  needs: GameState['needs'],
+  ageGroup: GameState['ageGroup'],
+): { quest: Quest; reason: string } {
+  const needOrder = [...needs].sort((a, b) => a.value - b.value);
+  for (const need of needOrder) {
+    const station = stations.find(item => item.id === need.type);
+    if (!station) continue;
+    const candidate = [station.featuredQuest, ...station.quests].find(quest => !completedQuestIds.has(quest.id));
+    if (candidate) {
+      return {
+        quest: candidate,
+        reason:
+          need.type === 'learning'
+            ? 'Дракоша видит, что тебе сейчас полезны знания.'
+            : need.type === 'creative'
+              ? 'Пора добавить немного творчества.'
+              : 'Хочется размяться и зарядиться энергией.',
+      };
+    }
+  }
+
+  if (dailyQuest && !completedQuestIds.has(dailyQuest.id)) {
+    return {
+      quest: dailyQuest,
+      reason: 'Сегодняшнее задание ещё ждёт тебя.',
+    };
+  }
+
+  const fallbackPool = stations.flatMap(station => [station.featuredQuest, ...station.quests]);
+  const fallback = (
+    fallbackPool.find(quest => !completedQuestIds.has(quest.id))
+    ?? fallbackPool[0]
+    ?? stations[0]?.featuredQuest
+    ?? dailyQuest
+    ?? stations.flatMap(station => [station.featuredQuest, ...station.quests])[0]
+  ) as Quest;
+  return {
+    quest: fallback,
+    reason: ageGroup === '6-8' ? 'Выбирай что-то короткое и понятное.' : 'Можно взять задание посложнее.',
+  };
+}
+
 export function HomePage({ state, onParentView }: Props) {
   const navigate = useNavigate();
   const mood = getPetMoodFromNeeds(state.needs);
@@ -288,6 +334,10 @@ export function HomePage({ state, onParentView }: Props) {
     const pool = ageQuests.filter(quest => !completedQuestIds.has(quest.id) && !routeIds.has(quest.id));
     return pool.length > 0 ? pool : ageQuests;
   }, [ageQuests, completedQuestIds, dailyRoute]);
+  const recommendedQuestData = useMemo(
+    () => getRecommendedQuest(dailyQuest, stations, completedQuestIds, state.needs, state.ageGroup),
+    [completedQuestIds, dailyQuest, stations, state.ageGroup, state.needs],
+  );
 
   const [selectedStationId, setSelectedStationId] = useState<StationId>(dailyQuest ? 'daily' : 'learning');
   const [selectedQuestId, setSelectedQuestId] = useState(featuredQuest.id);
@@ -301,6 +351,8 @@ export function HomePage({ state, onParentView }: Props) {
     ?? stations.flatMap(station => [station.featuredQuest, ...station.quests]).find(quest => quest.id === selectedQuestId)
     ?? featuredQuest;
   const surpriseQuest = surprisePool[surpriseIndex % surprisePool.length] ?? dailyRoute[0] ?? featuredQuest;
+  const recommendedQuest = recommendedQuestData.quest;
+  const recommendedReason = recommendedQuestData.reason;
   const selectedCompanion = getCompanionById(selectedCompanionId);
   const rewardCompanion = getCompanionByNeed(selectedQuest.needType);
   const selectedSceneSrc =
@@ -621,6 +673,85 @@ export function HomePage({ state, onParentView }: Props) {
                     {completedQuestIds.has(surpriseQuest.id) ? 'Повторить' : 'Начать сюрприз'}
                     <ChevronRight size={16} />
                   </button>
+                </div>
+              </div>
+            </section>
+
+            <section className="glass-panel rounded-[30px] p-4 sm:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-h4 font-black text-text">Что лучше сейчас</h2>
+                  <p className="text-body-sm font-semibold text-text-muted">
+                    Дракоша смотрит на настроение и выбирает самое подходящее задание.
+                  </p>
+                </div>
+                <span className="soft-chip bg-white/90 text-primary">
+                  <Sparkles size={13} />
+                  Совет Дракоши
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_300px] lg:items-center">
+                <div className="rounded-[28px] border border-white/70 bg-white/96 p-4 shadow-[0_14px_28px_rgba(47,47,69,0.08)]">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-black"
+                      style={{
+                        background: NEED_META[recommendedQuest.needType].accent,
+                        color: NEED_META[recommendedQuest.needType].color,
+                      }}
+                    >
+                      {getNeedLabel(recommendedQuest.needType)}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
+                      {getQuestTypeLabel(recommendedQuest.type)}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
+                      +{recommendedQuest.xpReward} XP
+                    </span>
+                  </div>
+                  <h3 className="mt-3 font-display text-h3 font-black text-text">{recommendedQuest.title}</h3>
+                  <p className="mt-2 text-body-sm font-semibold leading-snug text-text-muted">
+                    {recommendedReason}
+                  </p>
+                  <p className="mt-3 rounded-[22px] bg-[#f8fbff] p-4 text-body-sm font-semibold text-text-muted">
+                    {recommendedQuest.description}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => startSpecificQuest(recommendedQuest)}
+                    className="btn-primary mt-4 w-full sm:w-auto"
+                  >
+                    Начать совет Дракоши
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+
+                <div className="rounded-[28px] border border-white/70 bg-gradient-to-br from-white/96 via-[#f4fbff] to-[#edf9e7] p-4 shadow-[0_14px_28px_rgba(47,47,69,0.08)]">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-[#edeaff] text-primary">
+                      <Sparkles size={26} strokeWidth={2.5} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-caption font-black uppercase tracking-[0.08em] text-text-muted">Подсказка</p>
+                      <h3 className="truncate font-display text-h4 font-black text-text">Без лишних раздумий</h3>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-body-sm font-semibold leading-snug text-text-muted">
+                    Если ребёнок не знает, что выбрать, этот блок сразу показывает самое подходящее занятие.
+                  </p>
+                  <div className="mt-4 grid gap-2">
+                    {dailyRoute.slice(0, 2).map(quest => (
+                      <button
+                        key={quest.id}
+                        type="button"
+                        onClick={() => startSpecificQuest(quest)}
+                        className="rounded-[20px] bg-white/92 px-4 py-3 text-left text-body-sm font-black text-text shadow-[0_10px_20px_rgba(47,47,69,0.06)]"
+                      >
+                        {quest.title}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </section>
