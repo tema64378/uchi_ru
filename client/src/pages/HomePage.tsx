@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Activity,
@@ -18,6 +18,7 @@ import {
   Star,
   Trophy,
   UsersRound,
+  Shuffle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,7 +27,7 @@ import { getPetMoodFromNeeds } from '../lib/gameState';
 import { COMPANION_CATALOG, getCompanionById, getCompanionByNeed } from '../lib/companions';
 import { ALL_QUESTS, getDailyQuest, getQuestsByNeedForAge } from '../lib/quests';
 import { playTapSound } from '../lib/sfx';
-import { getAgeLabel, getTodayKey } from '../lib/progression';
+import { filterQuestsByAge, getAgeLabel, getTodayKey } from '../lib/progression';
 import type { GameState, NeedType, Quest } from '../types';
 
 interface Props {
@@ -195,6 +196,10 @@ function getPetPlacement(station: StationBase) {
   };
 }
 
+function getQuestNeedChip(quest: Quest) {
+  return NEED_META[quest.needType];
+}
+
 export function HomePage({ state, onParentView, onReset }: Props) {
   const navigate = useNavigate();
   const mood = getPetMoodFromNeeds(state.needs);
@@ -202,11 +207,16 @@ export function HomePage({ state, onParentView, onReset }: Props) {
   const totalTodayXp = state.completedQuestsToday.reduce((sum, quest) => sum + quest.xpEarned, 0);
   const journalEntries = [...state.completedQuestsToday].slice(-3).reverse();
   const recentGifts = state.giftCollection.slice(0, 4);
+  const completedQuestIds = useMemo(
+    () => new Set(state.completedQuestsToday.map(quest => quest.questId)),
+    [state.completedQuestsToday],
+  );
 
   const learningQuests = useMemo(() => getQuestsByNeedForAge('learning', state.ageGroup), [state.ageGroup]);
   const creativeQuests = useMemo(() => getQuestsByNeedForAge('creative', state.ageGroup), [state.ageGroup]);
   const energyQuests = useMemo(() => getQuestsByNeedForAge('energy', state.ageGroup), [state.ageGroup]);
   const dailyQuest = useMemo(() => getDailyQuest(state.ageGroup, getTodayKey()), [state.ageGroup]);
+  const ageQuests = useMemo(() => filterQuestsByAge(ALL_QUESTS, state.ageGroup), [state.ageGroup]);
 
   const featuredQuest = dailyQuest ?? learningQuests[0] ?? creativeQuests[0] ?? energyQuests[0] ?? ALL_QUESTS[0];
 
@@ -249,16 +259,49 @@ export function HomePage({ state, onParentView, onReset }: Props) {
     return Array.from(unique.values()).slice(0, 10);
   }, [creativeQuests, energyQuests, featuredQuest, learningQuests]);
 
+  const dailyRoute = useMemo(() => {
+    const route: Quest[] = [];
+    const used = new Set<string>();
+    const pools = [
+      learningQuests,
+      creativeQuests,
+      energyQuests,
+    ];
+
+    pools.forEach(pool => {
+      const pick = pool.find(quest => !completedQuestIds.has(quest.id)) ?? pool[0];
+      if (pick && !used.has(pick.id)) {
+        route.push(pick);
+        used.add(pick.id);
+      }
+    });
+
+    if (dailyQuest && !used.has(dailyQuest.id)) {
+      route.unshift(dailyQuest);
+      used.add(dailyQuest.id);
+    }
+
+    return route.slice(0, 4);
+  }, [completedQuestIds, creativeQuests, dailyQuest, energyQuests, learningQuests]);
+
+  const surprisePool = useMemo(() => {
+    const routeIds = new Set(dailyRoute.map(quest => quest.id));
+    const pool = ageQuests.filter(quest => !completedQuestIds.has(quest.id) && !routeIds.has(quest.id));
+    return pool.length > 0 ? pool : ageQuests;
+  }, [ageQuests, completedQuestIds, dailyRoute]);
+
   const [selectedStationId, setSelectedStationId] = useState<StationId>(dailyQuest ? 'daily' : 'learning');
   const [selectedQuestId, setSelectedQuestId] = useState(featuredQuest.id);
   const [factStep, setFactStep] = useState(0);
   const [selectedCompanionId, setSelectedCompanionId] = useState<string>(dailyQuest ? 'daily' : 'learning');
   const [companionFactStep, setCompanionFactStep] = useState(0);
+  const [surpriseIndex, setSurpriseIndex] = useState(0);
 
   const selectedStation = stations.find(station => station.id === selectedStationId) ?? stations[0];
   const selectedQuest = quickQuests.find(quest => quest.id === selectedQuestId)
     ?? stations.flatMap(station => [station.featuredQuest, ...station.quests]).find(quest => quest.id === selectedQuestId)
     ?? featuredQuest;
+  const surpriseQuest = surprisePool[surpriseIndex % surprisePool.length] ?? dailyRoute[0] ?? featuredQuest;
   const selectedCompanion = getCompanionById(selectedCompanionId);
   const rewardCompanion = getCompanionByNeed(selectedQuest.needType);
   const selectedSceneSrc =
@@ -306,6 +349,21 @@ export function HomePage({ state, onParentView, onReset }: Props) {
     playTapSound();
     navigate(`/task/${selectedQuest.type}/${selectedQuest.id}`);
   }
+
+  function startSpecificQuest(quest: Quest) {
+    playTapSound();
+    const stationId = questToStation.get(quest.id);
+    if (stationId) {
+      setSelectedStationId(stationId);
+      setSelectedCompanionId(stationId);
+    }
+    setSelectedQuestId(quest.id);
+    navigate(`/task/${quest.type}/${quest.id}`);
+  }
+
+  useEffect(() => {
+    setSurpriseIndex(0);
+  }, [dailyRoute, state.ageGroup]);
 
   return (
     <main className="app-page relative overflow-hidden bg-[#e8f8ff] text-text">
@@ -432,6 +490,130 @@ export function HomePage({ state, onParentView, onReset }: Props) {
                   </button>
                 );
               })}
+            </section>
+
+            <section className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+              <div className="glass-panel rounded-[30px] p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-h4 font-black text-text">Маршрут дня</h2>
+                    <p className="text-body-sm font-semibold text-text-muted">
+                      Три задания, которые хорошо собираются в один игровой круг.
+                    </p>
+                  </div>
+                  <span className="soft-chip bg-white/90 text-primary">
+                    <MapPin size={13} />
+                    Маршрут
+                  </span>
+                </div>
+
+                <div className="mt-4 grid gap-3">
+                  {dailyRoute.map((quest, index) => {
+                    const meta = getQuestNeedChip(quest);
+                    return (
+                      <button
+                        key={quest.id}
+                        type="button"
+                        onClick={() => startSpecificQuest(quest)}
+                        className="rounded-[24px] border border-white/70 bg-white/96 p-4 text-left shadow-[0_12px_24px_rgba(47,47,69,0.06)] transition hover:-translate-y-0.5"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px]"
+                            style={{ background: meta.accent, color: meta.color }}
+                          >
+                            {getQuestIcon(quest.type)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-2 flex flex-wrap items-center gap-2">
+                              <span
+                                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-black"
+                                style={{ background: meta.accent, color: meta.color }}
+                              >
+                                {index + 1} шаг
+                              </span>
+                              <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
+                                {getQuestTypeLabel(quest.type)}
+                              </span>
+                            </div>
+                            <h3 className="truncate text-body-sm font-black text-text">{quest.title}</h3>
+                            <p className="mt-1 text-[13px] font-semibold leading-snug text-text-muted">
+                              {quest.description}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 flex-col items-end gap-2">
+                            <span className="text-caption font-black text-text-muted">{quest.xpReward} XP</span>
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-caption font-black text-white"
+                              style={{ background: meta.color }}
+                            >
+                              Открыть
+                              <ChevronRight size={14} strokeWidth={3} />
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="glass-panel rounded-[30px] p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-display text-h4 font-black text-text">Сюрприз дня</h2>
+                    <p className="text-body-sm font-semibold text-text-muted">
+                      Система сама подбирает что-то необычное из того, что ещё не сделано сегодня.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSurpriseIndex(step => step + 1)}
+                    className="soft-chip bg-white/90 text-text-muted"
+                  >
+                    <Shuffle size={13} />
+                    Сменить
+                  </button>
+                </div>
+
+                <div className="mt-4 rounded-[28px] border border-white/70 bg-gradient-to-br from-white/95 via-[#f4fbff] to-[#edf9e7] p-4 shadow-[0_14px_28px_rgba(47,47,69,0.08)]">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-[#edeaff] text-primary">
+                      <Sparkles size={26} strokeWidth={2.5} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-caption font-black uppercase tracking-[0.08em] text-text-muted">Подборка</p>
+                      <h3 className="truncate font-display text-h4 font-black text-text">{surpriseQuest.title}</h3>
+                      <p className="text-caption font-black text-primary">+{surpriseQuest.xpReward} XP</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-body-sm font-semibold leading-snug text-text-muted">
+                    {surpriseQuest.description}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-black"
+                      style={{ background: NEED_META[surpriseQuest.needType].accent, color: NEED_META[surpriseQuest.needType].color }}
+                    >
+                      {getNeedLabel(surpriseQuest.needType)}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
+                      {getQuestTypeLabel(surpriseQuest.type)}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
+                      {completedQuestIds.has(surpriseQuest.id) ? 'Уже выполнено сегодня' : 'Ещё свободно'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => startSpecificQuest(surpriseQuest)}
+                    className="btn-primary mt-4 w-full"
+                  >
+                    Взять сюрприз
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
             </section>
 
             <section className="space-y-3">

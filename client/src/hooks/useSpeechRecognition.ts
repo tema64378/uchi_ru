@@ -31,7 +31,7 @@ interface UseSpeechReturn {
   state: SpeechState;
   transcript: string;
   start: () => void;
-  stop: () => void;
+  stop: () => Promise<string>;
   reset: () => void;
   supported: boolean;
 }
@@ -47,6 +47,9 @@ export function useSpeechRecognition(): UseSpeechReturn {
   const [state, setState] = useState<SpeechState>('idle');
   const [transcript, setTranscript] = useState('');
   const recRef = useRef<SpeechRecognitionInstance | null>(null);
+  const finalTranscriptRef = useRef('');
+  const interimTranscriptRef = useRef('');
+  const pendingStopRef = useRef<((value: string) => void) | null>(null);
 
   const Rec = typeof window !== 'undefined'
     ? (window.SpeechRecognition || window.webkitSpeechRecognition)
@@ -54,11 +57,22 @@ export function useSpeechRecognition(): UseSpeechReturn {
   const supported = !!Rec;
 
   const stop = useCallback(() => {
-    recRef.current?.stop();
+    return new Promise<string>(resolve => {
+      pendingStopRef.current = resolve;
+      recRef.current?.stop();
+
+      if (!recRef.current) {
+        pendingStopRef.current = null;
+        resolve(`${finalTranscriptRef.current} ${interimTranscriptRef.current}`.replace(/\s+/g, ' ').trim());
+      }
+    });
   }, []);
 
   const start = useCallback(() => {
     if (!Rec) return;
+    pendingStopRef.current = null;
+    finalTranscriptRef.current = '';
+    interimTranscriptRef.current = '';
     setTranscript('');
     setState('listening');
 
@@ -77,17 +91,30 @@ export function useSpeechRecognition(): UseSpeechReturn {
         if (e.results[i].isFinal) final += t + ' ';
         else interim += t;
       }
-      setTranscript(prev => (prev + final || interim));
+      finalTranscriptRef.current = `${finalTranscriptRef.current} ${final}`.replace(/\s+/g, ' ').trim();
+      interimTranscriptRef.current = interim.trim();
+      const next = `${finalTranscriptRef.current} ${interimTranscriptRef.current}`.replace(/\s+/g, ' ').trim();
+      setTranscript(next);
     };
 
     rec.onerror = () => setState('error');
-    rec.onend = () => setState(prev => prev === 'listening' ? 'done' : prev);
+    rec.onend = () => {
+      setState(prev => prev === 'listening' ? 'done' : prev);
+      const value = `${finalTranscriptRef.current} ${interimTranscriptRef.current}`.replace(/\s+/g, ' ').trim();
+      if (pendingStopRef.current) {
+        pendingStopRef.current(value);
+        pendingStopRef.current = null;
+      }
+    };
 
     rec.start();
   }, [Rec]);
 
   const reset = useCallback(() => {
     recRef.current?.abort();
+    pendingStopRef.current = null;
+    finalTranscriptRef.current = '';
+    interimTranscriptRef.current = '';
     setTranscript('');
     setState('idle');
   }, []);
