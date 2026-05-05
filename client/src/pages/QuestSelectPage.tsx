@@ -55,6 +55,10 @@ export function QuestSelectPage({ state }: Props) {
   const { needType = 'learning' } = useParams();
   const navigate = useNavigate();
   const meta = NEED_META[needType] ?? NEED_META.learning;
+  const completedQuestIds = useMemo(
+    () => new Set(state.completedQuestsToday.map(quest => quest.questId)),
+    [state.completedQuestsToday],
+  );
 
   const availableQuests = useMemo(() => getQuestsByNeedForAge(needType, state.ageGroup), [needType, state.ageGroup]);
   const fallbackQuest = availableQuests[0];
@@ -142,6 +146,7 @@ export function QuestSelectPage({ state }: Props) {
               {availableQuests.map(quest => {
                 const isActive = selectedQuest?.id === quest.id;
                 const taskMeta = getTaskMeta(quest);
+                const isDone = completedQuestIds.has(quest.id);
                 return (
                   <button
                     key={quest.id}
@@ -169,6 +174,11 @@ export function QuestSelectPage({ state }: Props) {
                           >
                             {taskMeta.label}
                           </span>
+                          {isDone && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
+                              Сделано сегодня
+                            </span>
+                          )}
                           <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
                             {quest.xpReward} XP
                           </span>
@@ -243,7 +253,7 @@ export function QuestSelectPage({ state }: Props) {
                     className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-body-sm font-black text-white shadow-[0_12px_28px_rgba(47,47,69,0.16)] transition hover:-translate-y-0.5"
                     style={{ background: meta.color }}
                   >
-                    Начать
+                    {completedQuestIds.has(selectedQuest.id) ? 'Повторить' : 'Начать'}
                     <ChevronRight size={18} strokeWidth={2.8} />
                   </button>
                 </>

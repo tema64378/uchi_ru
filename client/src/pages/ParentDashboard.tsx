@@ -62,6 +62,14 @@ export function ParentDashboard({ state, onBack, onReset }: Props) {
   const minutes = estimateMinutes(completedToday);
   const recentBadges = state.badges.slice(-4).reverse();
   const recentGifts = state.giftCollection.slice(0, 3);
+  const questTypeStats = [
+    { key: 'reading', label: 'Чтение', emoji: '📚', color: '#765fde', value: state.questTypeCounts.reading },
+    { key: 'story', label: 'Истории', emoji: '📖', color: '#4d75ff', value: state.questTypeCounts.story },
+    { key: 'photo', label: 'Фото', emoji: '📸', color: '#ff6170', value: state.questTypeCounts.photo },
+    { key: 'activity', label: 'Движение', emoji: '⚡', color: '#f0a000', value: state.questTypeCounts.activity },
+    { key: 'quiz', label: 'Логика', emoji: '🧠', color: '#29b37d', value: state.questTypeCounts.quiz },
+  ];
+  const totalQuestTypes = questTypeStats.reduce((sum, item) => sum + item.value, 0);
 
   const localPhotos = completedToday
     .filter(quest => quest.taskType === 'photo' && quest.photoUrl)
@@ -222,6 +230,51 @@ export function ParentDashboard({ state, onBack, onReset }: Props) {
                     showValue
                   />
                 ))}
+              </div>
+            </motion.section>
+
+            <motion.section
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.09 }}
+              className="glass-panel rounded-[34px] p-5 sm:p-6"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-h4 font-black text-text">Какие задания нравятся</h2>
+                  <p className="text-body-sm font-semibold text-text-muted">Короткий срез по типам заданий за всё время.</p>
+                </div>
+                <span className="soft-chip bg-white/90 text-text-muted">
+                  {totalQuestTypes}
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-3">
+                {questTypeStats.map(item => {
+                  const width = totalQuestTypes > 0 ? Math.max(10, Math.round((item.value / totalQuestTypes) * 100)) : 0;
+                  return (
+                    <div key={item.key} className="rounded-[24px] border border-white/70 bg-white/95 p-4 shadow-[0_12px_24px_rgba(47,47,69,0.06)]">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="flex h-10 w-10 items-center justify-center rounded-[14px]"
+                            style={{ background: `${item.color}18`, color: item.color }}
+                          >
+                            <span className="text-lg leading-none">{item.emoji}</span>
+                          </div>
+                          <div>
+                            <p className="text-body-sm font-black text-text">{item.label}</p>
+                            <p className="text-caption font-semibold text-text-muted">{item.value} раз</p>
+                          </div>
+                        </div>
+                        <span className="text-caption font-black text-text-muted">{width}%</span>
+                      </div>
+                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                        <div className="h-full rounded-full" style={{ width: `${width}%`, background: item.color }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </motion.section>
 

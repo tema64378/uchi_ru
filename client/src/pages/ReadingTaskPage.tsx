@@ -82,6 +82,22 @@ function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/ё/g, 'е')
+    .replace(/[^а-яa-z0-9\s]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getReadingHints(text: string): string[] {
+  const words = normalizeText(text)
+    .split(' ')
+    .filter(word => word.length > 3);
+  return Array.from(new Set(words)).slice(0, 8);
+}
+
 export function ReadingTaskPage({ onComplete }: Props) {
   const { questId } = useParams<{ questId: string }>();
   const navigate = useNavigate();
@@ -114,6 +130,10 @@ export function ReadingTaskPage({ onComplete }: Props) {
   const isStory = questData.type === 'story';
   const isListening = speech.state === 'listening';
   const readingText = questData.readingText ?? questData.description;
+  const hintWords = getReadingHints(readingText);
+  const transcriptWords = normalizeText(speech.transcript).split(' ').filter(Boolean);
+  const matchedHints = hintWords.filter(word => transcriptWords.some(spoken => spoken.includes(word) || word.includes(spoken)));
+  const hintProgress = hintWords.length > 0 ? matchedHints.length / hintWords.length : 0;
 
   async function handleStop() {
     const currentTranscript = (await speech.stop()).trim();
@@ -256,6 +276,36 @@ export function ReadingTaskPage({ onComplete }: Props) {
                 style={{ fontSize: 'clamp(18px, 2vw, 22px)', lineHeight: 1.7 }}
               >
                 {readingText}
+              </p>
+            </div>
+
+            <div className="mt-5 rounded-[30px] border border-white/70 bg-[#f8fbff] p-5 shadow-[0_16px_30px_rgba(47,47,69,0.06)]">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-caption font-black uppercase tracking-[0.08em] text-text-muted">Подсказки для чтения</p>
+                  <h2 className="mt-1 font-display text-h4 font-black text-text">Слова, которые Дракоша ждёт</h2>
+                </div>
+                <span className="soft-chip bg-white/90 text-primary">
+                  {Math.round(hintProgress * 100)}%
+                </span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {hintWords.map(word => {
+                  const isMatched = matchedHints.includes(word);
+                  return (
+                    <span
+                      key={word}
+                      className={`rounded-full px-3 py-2 text-caption font-black ${
+                        isMatched ? 'bg-[#e9ffe9] text-[#20753e]' : 'bg-white text-text-muted'
+                      }`}
+                    >
+                      {word}
+                    </span>
+                  );
+                })}
+              </div>
+              <p className="mt-3 text-body-sm font-semibold text-text-muted">
+                Дракоша отмечает знакомые слова, пока ты читаешь. Это помогает не теряться и видеть, что уже получилось.
               </p>
             </div>
 

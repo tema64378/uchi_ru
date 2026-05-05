@@ -22,6 +22,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import { Dragon } from '../components/Dragon';
+import { PlayGuideStrip } from '../components/PlayGuideStrip';
 import { getPetMoodFromNeeds } from '../lib/gameState';
 import { COMPANION_CATALOG, getCompanionById, getCompanionByNeed } from '../lib/companions';
 import { ALL_QUESTS, getDailyQuest, getQuestsByNeedForAge } from '../lib/quests';
@@ -406,17 +407,7 @@ export function HomePage({ state, onParentView }: Props) {
                     </span>
                   </div>
 
-                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                    {[
-                      '1. Выбери место',
-                      '2. Начни задание',
-                      '3. Забери подарок',
-                    ].map(step => (
-                      <div key={step} className="rounded-[18px] bg-white/88 px-4 py-3 text-caption font-black text-text-muted shadow-[0_8px_18px_rgba(47,47,69,0.06)]">
-                        {step}
-                      </div>
-                    ))}
-                  </div>
+                  <PlayGuideStrip className="mt-5" compact />
                 </div>
 
                 <div className="rounded-[28px] border border-white/70 bg-white/96 p-4 shadow-[0_14px_30px_rgba(47,47,69,0.1)]">
@@ -520,12 +511,15 @@ export function HomePage({ state, onParentView }: Props) {
                 <div className="mt-4 grid gap-3">
                   {dailyRoute.map((quest, index) => {
                     const meta = getQuestNeedChip(quest);
+                    const isDone = completedQuestIds.has(quest.id);
                     return (
                       <button
                         key={quest.id}
                         type="button"
                         onClick={() => startSpecificQuest(quest)}
-                        className="rounded-[24px] border border-white/70 bg-white/96 p-4 text-left shadow-[0_12px_24px_rgba(47,47,69,0.06)] transition hover:-translate-y-0.5"
+                        className={`rounded-[24px] border p-4 text-left shadow-[0_12px_24px_rgba(47,47,69,0.06)] transition hover:-translate-y-0.5 ${
+                          isDone ? 'border-white/60 bg-white/88' : 'border-white/70 bg-white/96'
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
@@ -542,6 +536,11 @@ export function HomePage({ state, onParentView }: Props) {
                               >
                                 {index + 1} шаг
                               </span>
+                              {isDone && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
+                                  Сделано сегодня
+                                </span>
+                              )}
                               <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
                                 {getQuestTypeLabel(quest.type)}
                               </span>
@@ -557,7 +556,7 @@ export function HomePage({ state, onParentView }: Props) {
                               className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-caption font-black text-white"
                               style={{ background: meta.color }}
                             >
-                              Начать
+                              {isDone ? 'Повторить' : 'Начать'}
                               <ChevronRight size={14} strokeWidth={3} />
                             </span>
                           </div>
@@ -619,7 +618,7 @@ export function HomePage({ state, onParentView }: Props) {
                     onClick={() => startSpecificQuest(surpriseQuest)}
                     className="btn-primary mt-4 w-full"
                   >
-                    Начать сюрприз
+                    {completedQuestIds.has(surpriseQuest.id) ? 'Повторить' : 'Начать сюрприз'}
                     <ChevronRight size={16} />
                   </button>
                 </div>
@@ -638,6 +637,7 @@ export function HomePage({ state, onParentView }: Props) {
                 {quickQuests.map(quest => {
                   const isActive = selectedQuest.id === quest.id;
                   const needMeta = NEED_META[quest.needType];
+                  const isDone = completedQuestIds.has(quest.id);
                   return (
                     <button
                       key={quest.id}
@@ -662,6 +662,11 @@ export function HomePage({ state, onParentView }: Props) {
                             >
                               {getNeedLabel(quest.needType)}
                             </span>
+                            {isDone && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
+                                Сделано сегодня
+                              </span>
+                            )}
                             <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
                               {getQuestTypeLabel(quest.type)}
                             </span>

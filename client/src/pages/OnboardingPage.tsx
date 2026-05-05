@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AgeGroup } from '../types';
 import { getAgeLabel } from '../lib/progression';
+import { PlayGuideStrip } from '../components/PlayGuideStrip';
 
 interface Props {
   onComplete: (name: string, ageGroup: AgeGroup) => void;
@@ -168,24 +169,7 @@ export function OnboardingPage({ onComplete }: Props) {
               Возраст: {getAgeLabel(ageGroup)}. Сейчас откроется карта, где можно выбирать задания и получать подарки.
             </p>
 
-            <div className="grid grid-cols-3 gap-3 mb-8">
-              {[
-                { emoji: '🗺️', label: 'Карта', color: '#EDEAFF', text: '#765fde' },
-                { emoji: '🏆', label: 'Награды', color: '#FFE8EA', text: '#ff6170' },
-                { emoji: '🧠', label: 'Логика', color: '#FFF3C8', text: '#f0a000' },
-              ].map(item => (
-                <div
-                  key={item.label}
-                  className="rounded-[16px] p-3 text-center"
-                  style={{ background: item.color }}
-                >
-                  <div className="text-3xl mb-1">{item.emoji}</div>
-                  <div className="text-caption font-black" style={{ color: item.text }}>
-                    {item.label}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <PlayGuideStrip className="mb-8 text-left" compact />
 
             <div className="flex gap-3">
               <button className="btn-secondary flex-1" onClick={() => setStep(2)}>
