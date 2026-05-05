@@ -103,7 +103,7 @@ export function QuestSelectPage({ state }: Props) {
                     Выбери задание
                   </h1>
                   <p className="mt-3 max-w-2xl text-body-md font-semibold text-text-muted">
-                    Здесь собраны все задания для этого направления. Слева можно посмотреть варианты, справа выбрать одно и сразу начать.
+                    Нажми на задание, посмотри, что нужно сделать, и нажми «Начать».
                   </p>
 
                   <div className="mt-4 flex flex-wrap gap-2">

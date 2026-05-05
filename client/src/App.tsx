@@ -128,8 +128,8 @@ function AppRoutes() {
           path="/"
           element={
             isOnboarded
-              ? <HomePage state={gameState} onParentView={handleParentView} onReset={handleResetState} />
-              : <OnboardingPage onComplete={handleOnboardingComplete} onDemoStart={handleDemoStart} />
+              ? <HomePage state={gameState} onParentView={handleParentView} />
+              : <OnboardingPage onComplete={handleOnboardingComplete} />
           }
         />
 

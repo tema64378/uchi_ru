@@ -5,7 +5,6 @@ import { getAgeLabel } from '../lib/progression';
 
 interface Props {
   onComplete: (name: string, ageGroup: AgeGroup) => void;
-  onDemoStart?: () => void;
 }
 
 const AGE_GROUPS: { value: AgeGroup; title: string; description: string; icon: string }[] = [
@@ -13,7 +12,7 @@ const AGE_GROUPS: { value: AgeGroup; title: string; description: string; icon: s
   { value: '9-11', title: '9–11 лет', description: 'Чуть больше логики, счёта и самостоятельности.', icon: '🚀' },
 ];
 
-export function OnboardingPage({ onComplete, onDemoStart }: Props) {
+export function OnboardingPage({ onComplete }: Props) {
   const [name, setName] = useState('');
   const [ageGroup, setAgeGroup] = useState<AgeGroup>('6-8');
   const [step, setStep] = useState(0);
@@ -41,16 +40,8 @@ export function OnboardingPage({ onComplete, onDemoStart }: Props) {
               Я твой звёздный питомец. Помоги мне расти, путешествуя по карте и выполняя задания.
             </p>
             <button className="btn-primary w-full text-h4" onClick={() => setStep(1)}>
-              Поехали
+              Начать
             </button>
-            {onDemoStart && (
-              <button
-                className="btn-secondary w-full mt-3"
-                onClick={onDemoStart}
-              >
-                Демо для видео
-              </button>
-            )}
           </motion.div>
         )}
 
@@ -110,9 +101,9 @@ export function OnboardingPage({ onComplete, onDemoStart }: Props) {
               animate={{ y: [0, -12, 0] }}
               transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
             />
-            <h2 className="text-h3 font-black text-text mb-2">Выбери режим карты</h2>
+            <h2 className="text-h3 font-black text-text mb-2">Сколько тебе лет?</h2>
             <p className="text-body-md text-text-muted mb-6 leading-relaxed">
-              Это поможет Дракоше подбирать задания по возрасту и сложности.
+              Так Дракоша подберёт задания, которые подходят именно тебе.
             </p>
 
             <div className="grid gap-3 mb-8">
@@ -174,7 +165,7 @@ export function OnboardingPage({ onComplete, onDemoStart }: Props) {
               Готово, {name}! 🎉
             </h2>
             <p className="text-body-md text-text-muted mb-6 leading-relaxed">
-              Режим: {getAgeLabel(ageGroup)}. Сейчас откроется карта, где можно ходить мышкой и брать задания.
+              Возраст: {getAgeLabel(ageGroup)}. Сейчас откроется карта, где можно выбирать задания и получать подарки.
             </p>
 
             <div className="grid grid-cols-3 gap-3 mb-8">
@@ -201,7 +192,7 @@ export function OnboardingPage({ onComplete, onDemoStart }: Props) {
                 Назад
               </button>
               <button className="btn-primary flex-1 text-h4" onClick={() => onComplete(name.trim(), ageGroup)}>
-                Войти в карту
+                Открыть карту
               </button>
             </div>
           </motion.div>

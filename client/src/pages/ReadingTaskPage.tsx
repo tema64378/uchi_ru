@@ -353,7 +353,7 @@ export function ReadingTaskPage({ onComplete }: Props) {
                         <p className="mt-2 text-body-sm font-semibold text-text-muted">
                           {isStory
                             ? 'Расскажи историю живо и длиннее двадцати слов.'
-                            : 'Читай спокойно и чётко, чтобы система распознала слова лучше.'}
+                            : 'Читай спокойно и чётко. Дракоша слушает каждое слово.'}
                         </p>
                       </div>
 
@@ -398,7 +398,7 @@ export function ReadingTaskPage({ onComplete }: Props) {
                     <div className="rounded-[30px] border border-white/70 bg-white/95 p-4 shadow-[0_16px_30px_rgba(47,47,69,0.08)]">
                       <p className="text-caption font-black uppercase tracking-[0.08em] text-text-muted">Дальше</p>
                       <p className="mt-2 text-body-sm font-semibold text-text-muted">
-                        Возвращайся на карту или выбери ещё одно чтение.
+                        Сейчас откроется подарок, а потом можно выбрать новое задание.
                       </p>
                     </div>
                   </motion.div>

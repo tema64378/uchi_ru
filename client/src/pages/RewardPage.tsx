@@ -175,7 +175,7 @@ export function RewardPage({ onRewardCollected }: Props) {
                 </motion.div>
 
                 <p className="mt-4 max-w-2xl text-body-md font-semibold text-text-muted">
-                  {getQuestMood(quest)}. Забирай результат и возвращайся на карту к следующей точке.
+                  {getQuestMood(quest)}. Забирай подарок и возвращайся на карту.
                 </p>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -284,7 +284,7 @@ export function RewardPage({ onRewardCollected }: Props) {
 
                 <div className="mt-4 rounded-[24px] bg-[#f8f8ff] p-4">
                   <p className="text-body-sm font-semibold text-text-muted">
-                    Дракоша запомнил твоё задание, подарок уже в коллекции, и ждёт следующую точку на карте.
+                    Подарок уже в коллекции. Дракоша ждёт тебя на карте.
                   </p>
                 </div>
 
@@ -326,7 +326,7 @@ export function RewardPage({ onRewardCollected }: Props) {
               <div className="rounded-[24px] bg-white/95 p-4 shadow-[0_14px_28px_rgba(47,47,69,0.08)]">
                 <p className="text-caption font-black uppercase tracking-[0.08em] text-text-muted">Что дальше</p>
                 <p className="mt-2 text-body-sm font-semibold text-text">
-                  Выбирай новую станцию и продолжай маршрут, пока карта горячая.
+                  Выбери новое место на карте или начни случайное задание.
                 </p>
               </div>
 

@@ -13,7 +13,6 @@ import {
   MapPin,
   MessageCircle,
   NotebookPen,
-  LogOut,
   Sparkles,
   Star,
   Trophy,
@@ -33,7 +32,6 @@ import type { GameState, NeedType, Quest } from '../types';
 interface Props {
   state: GameState;
   onParentView: () => void;
-  onReset: () => void;
 }
 
 type StationId = NeedType | 'daily';
@@ -200,7 +198,7 @@ function getQuestNeedChip(quest: Quest) {
   return NEED_META[quest.needType];
 }
 
-export function HomePage({ state, onParentView, onReset }: Props) {
+export function HomePage({ state, onParentView }: Props) {
   const navigate = useNavigate();
   const mood = getPetMoodFromNeeds(state.needs);
   const completedToday = state.completedQuestsToday.length;
@@ -381,13 +379,13 @@ export function HomePage({ state, onParentView, onReset }: Props) {
                 <div className="min-w-0">
                   <div className="map-title-chip w-fit bg-white/85">
                     <Sparkles size={14} />
-                    Домашняя страница
+                    Карта приключений
                   </div>
                   <h1 className="mt-3 font-display text-h2 font-black text-text sm:text-h1">
-                    {state.childName || 'Игрок'}, выбирай занятие без лишнего шума
+                    {state.childName || 'Игрок'}, выбери задание
                   </h1>
                   <p className="mt-3 max-w-2xl text-body-md font-semibold text-text-muted">
-                    Справа карта с четырьмя станциями, слева всё остальное: прогресс, потребности и быстрые занятия.
+                    Нажми на место на карте или начни план на сегодня. После задания Дракоша подарит подарок.
                   </p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -406,6 +404,18 @@ export function HomePage({ state, onParentView, onReset }: Props) {
                       <Heart size={13} />
                       {mood === 'excited' ? 'очень бодрый' : mood === 'happy' ? 'весёлый' : mood === 'sad' ? 'нужно подбодрить' : 'спокойный'}
                     </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                    {[
+                      '1. Выбери место',
+                      '2. Начни задание',
+                      '3. Забери подарок',
+                    ].map(step => (
+                      <div key={step} className="rounded-[18px] bg-white/88 px-4 py-3 text-caption font-black text-text-muted shadow-[0_8px_18px_rgba(47,47,69,0.06)]">
+                        {step}
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -496,14 +506,14 @@ export function HomePage({ state, onParentView, onReset }: Props) {
               <div className="glass-panel rounded-[30px] p-4 sm:p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="font-display text-h4 font-black text-text">Маршрут дня</h2>
+                    <h2 className="font-display text-h4 font-black text-text">План на сегодня</h2>
                     <p className="text-body-sm font-semibold text-text-muted">
-                      Три задания, которые хорошо собираются в один игровой круг.
+                      Сделай несколько разных заданий и собери больше подарков.
                     </p>
                   </div>
                   <span className="soft-chip bg-white/90 text-primary">
                     <MapPin size={13} />
-                    Маршрут
+                    3 шага
                   </span>
                 </div>
 
@@ -547,7 +557,7 @@ export function HomePage({ state, onParentView, onReset }: Props) {
                               className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-caption font-black text-white"
                               style={{ background: meta.color }}
                             >
-                              Открыть
+                              Начать
                               <ChevronRight size={14} strokeWidth={3} />
                             </span>
                           </div>
@@ -561,9 +571,9 @@ export function HomePage({ state, onParentView, onReset }: Props) {
               <div className="glass-panel rounded-[30px] p-4 sm:p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="font-display text-h4 font-black text-text">Сюрприз дня</h2>
+                    <h2 className="font-display text-h4 font-black text-text">Случайное задание</h2>
                     <p className="text-body-sm font-semibold text-text-muted">
-                      Система сама подбирает что-то необычное из того, что ещё не сделано сегодня.
+                      Не знаешь, что выбрать? Дракоша выбрал задание за тебя.
                     </p>
                   </div>
                   <button
@@ -582,7 +592,7 @@ export function HomePage({ state, onParentView, onReset }: Props) {
                       <Sparkles size={26} strokeWidth={2.5} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-caption font-black uppercase tracking-[0.08em] text-text-muted">Подборка</p>
+                      <p className="text-caption font-black uppercase tracking-[0.08em] text-text-muted">Дракоша выбрал</p>
                       <h3 className="truncate font-display text-h4 font-black text-text">{surpriseQuest.title}</h3>
                       <p className="text-caption font-black text-primary">+{surpriseQuest.xpReward} XP</p>
                     </div>
@@ -601,7 +611,7 @@ export function HomePage({ state, onParentView, onReset }: Props) {
                       {getQuestTypeLabel(surpriseQuest.type)}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-text-muted">
-                      {completedQuestIds.has(surpriseQuest.id) ? 'Уже выполнено сегодня' : 'Ещё свободно'}
+                      {completedQuestIds.has(surpriseQuest.id) ? 'Уже сделал сегодня' : 'Можно начинать'}
                     </span>
                   </div>
                   <button
@@ -609,7 +619,7 @@ export function HomePage({ state, onParentView, onReset }: Props) {
                     onClick={() => startSpecificQuest(surpriseQuest)}
                     className="btn-primary mt-4 w-full"
                   >
-                    Взять сюрприз
+                    Начать сюрприз
                     <ChevronRight size={16} />
                   </button>
                 </div>
@@ -618,7 +628,7 @@ export function HomePage({ state, onParentView, onReset }: Props) {
 
             <section className="space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="font-display text-h4 font-black text-text">Ещё занятия</h2>
+                <h2 className="font-display text-h4 font-black text-text">Другие задания</h2>
                 <span className="text-caption font-black uppercase tracking-[0.08em] text-text-muted">
                   {quickQuests.length} вариантов
                 </span>
@@ -682,9 +692,9 @@ export function HomePage({ state, onParentView, onReset }: Props) {
               <div className="glass-panel rounded-[30px] p-4 sm:p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="font-display text-h4 font-black text-text">Журнал дня</h2>
+                    <h2 className="font-display text-h4 font-black text-text">Что уже сделано</h2>
                     <p className="text-body-sm font-semibold text-text-muted">
-                      Короткая лента того, что уже сделано.
+                      Здесь появляются задания, которые ты уже закончил.
                     </p>
                   </div>
                   <span className="soft-chip bg-white/90 text-text-muted">
@@ -724,9 +734,9 @@ export function HomePage({ state, onParentView, onReset }: Props) {
               <div className="glass-panel rounded-[30px] p-4 sm:p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="font-display text-h4 font-black text-text">Коллекция подарков</h2>
+                    <h2 className="font-display text-h4 font-black text-text">Мои подарки</h2>
                     <p className="text-body-sm font-semibold text-text-muted">
-                      Подарки копятся после каждого выполненного задания.
+                      Друзья Дракоши дарят их после заданий.
                     </p>
                   </div>
                   <span className="soft-chip bg-white/90 text-primary">
@@ -752,7 +762,7 @@ export function HomePage({ state, onParentView, onReset }: Props) {
                   </div>
                 ) : (
                   <div className="mt-4 rounded-[24px] border border-dashed border-white/80 bg-white/80 p-5 text-body-sm font-semibold text-text-muted">
-                    Тут появятся подарки героев после выполнения заданий.
+                    Сделай задание, и здесь появится первый подарок.
                   </div>
                 )}
               </div>
@@ -761,9 +771,9 @@ export function HomePage({ state, onParentView, onReset }: Props) {
             <section className="glass-panel rounded-[30px] p-4 sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="font-display text-h4 font-black text-text">Персонажи</h2>
+                  <h2 className="font-display text-h4 font-black text-text">Друзья Дракоши</h2>
                   <p className="text-body-sm font-semibold text-text-muted">
-                    Герои карты сами дарят тебе подарок после задания.
+                    Они помогают на карте и дарят подарки.
                   </p>
                 </div>
               </div>
@@ -847,7 +857,7 @@ export function HomePage({ state, onParentView, onReset }: Props) {
                           {rewardCompanion.name} принесёт {rewardCompanion.gift}.
                         </p>
                         <p className="mt-1 text-[12px] font-semibold leading-snug text-text-muted">
-                          Выполни выбранное задание, и награда откроется на отдельном экране.
+                          Сделай выбранное задание, и подарок откроется на экране награды.
                         </p>
                       </div>
                     </div>
@@ -883,21 +893,13 @@ export function HomePage({ state, onParentView, onReset }: Props) {
                   <div>
                     <div className="map-title-chip w-fit bg-white/85">
                       <MapPin size={14} />
-                      2D карта
+                      Карта
                     </div>
                     <p className="mt-2 text-body-sm font-semibold text-text-muted">
-                      Нажми на станцию, чтобы выбрать занятие.
+                      Нажми на место, чтобы выбрать задание.
                     </p>
                   </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={onReset}
-                    className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-2 text-caption font-black text-text-muted shadow-[0_8px_18px_rgba(47,47,69,0.08)]"
-                  >
-                    <LogOut size={14} strokeWidth={2.6} />
-                    Сбросить вход
-                  </button>
                   <button
                     type="button"
                     onClick={onParentView}
@@ -1029,7 +1031,7 @@ export function HomePage({ state, onParentView, onReset }: Props) {
                   className="inline-flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-body-sm font-black text-white shadow-[0_12px_28px_rgba(47,47,69,0.16)] transition hover:-translate-y-0.5"
                   style={{ background: selectedStation.color }}
                 >
-                  Взять
+                  Начать задание
                   <ChevronRight size={18} strokeWidth={2.8} />
                 </button>
               </div>
